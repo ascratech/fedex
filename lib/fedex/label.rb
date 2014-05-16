@@ -20,7 +20,7 @@ module Fedex
         @options[:rounting_code] = operational_details[2][:content]
         @options[:service_type] = operational_details[6][:content]
         @options[:time_of_delivery] = operational_details[7][:content]
-        @options[:airport_id] = operational_details[11][:content]
+        @options[:airport_id] = operational_details[10][:content]
       end
       barcode = label_details[:process_shipment_reply][:completed_shipment_detail][:completed_package_details][:operational_detail][:barcodes]
       @options[:barcode_type] = barcode[:string_barcodes][:type]
