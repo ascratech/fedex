@@ -17,7 +17,7 @@ module Fedex
       operational_details = package_details[:operational_detail][:operational_instructions]
       if operational_details.present?
         @options[:form_id] = operational_details[1][:content]
-        @options[:rounting_code] = operational_details[2][:content]
+        @options[:routing_code] = operational_details[2][:content]
         @options[:service_type] = operational_details[6][:content]
         @options[:time_of_delivery] = operational_details[7][:content]
         @options[:airport_id] = operational_details[10][:content]
@@ -73,8 +73,8 @@ module Fedex
       options[:cod_form_id]
     end
      
-    def rounting_code
-      options[:rounting_code]
+    def routing_code
+      options[:routing_code]
     end
         
     def service_type
