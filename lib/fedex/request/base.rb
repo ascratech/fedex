@@ -49,6 +49,7 @@ module Fedex
         @credentials = credentials
         @shipper, @recipient, @packages, @service_type, @customs_clearance_detail, @debug = options[:shipper], options[:recipient], options[:packages], options[:service_type], options[:customs_clearance_detail], options[:debug]
         @debug = ENV['DEBUG'] == 'true'
+        @special_services = options[:special_services_requested]
         @shipping_options =  options[:shipping_options] ||={}
         @payment_options = options[:payment_options] ||={}
         requires!(@payment_options, :type, :account_number, :name, :company, :phone_number, :country_code) if @payment_options.length > 0
@@ -113,6 +114,7 @@ module Fedex
           add_shipper(xml)
           add_recipient(xml)
           add_shipping_charges_payment(xml)
+          add_special_service_requested(xml)
           add_customs_clearance(xml) if @customs_clearance_detail
           xml.RateRequestTypes "ACCOUNT"
           add_packages(xml)
@@ -182,6 +184,55 @@ module Fedex
         }
       end
 
+      #add special services for cod
+      def add_special_service_requested(xml)
+  if @special_services
+          xml.SpecialServicesRequested{
+            if @special_services[:special_service_types].is_a? Array
+              @special_services[:special_service_types].each do |type|
+                xml.SpecialServiceTypes type
+              end
+            else
+              xml.SpecialServiceTypes @special_services[:special_service_types]
+            end
+            # Handle COD Options
+            if @special_services[:cod_detail]
+              xml.CodDetail{
+                xml.CodCollectionAmount{
+                  xml.Currency @special_services[:cod_detail][:cod_collection_amount][:currency]
+                  xml.Amount @special_services[:cod_detail][:cod_collection_amount][:amount]
+                }
+                if @special_services[:cod_detail][:add_transportation_charges]
+                  xml.AddTransportationCharges @special_services[:cod_detail][:add_transportation_charges]
+                end
+                xml.CollectionType @special_services[:cod_detail][:collection_type]
+                # xml.CodRecipient {
+                #  add_shipper(xml)
+                #}
+                if @special_services[:cod_detail][:reference_indicator]
+                  xml.ReferenceIndicator @special_services[:cod_detail][:reference_indicator]
+                end
+              }
+            end
+            # DangerousGoodsDetail goes here
+            if @special_services[:dry_ice_weight]
+              xml.DryIceWeight{
+                xml.Units @special_services[:dry_ice_weight][:units]
+                xml.Value @special_services[:dry_ice_weight][:value]
+              }
+            end
+            if @special_services[:signature_option_detail]
+              xml.SignatureOptionDetail{
+                xml.OptionType @special_services[:signature_option_detail][:signature_option_type]
+              }
+            end
+            if @special_services[:priority_alert_detail]
+              xml.PriorityAlertDetail @special_services[:priority_alert_detail]
+            end
+          }
+  end
+      end
+
       # Add Master Tracking Id (for MPS Shipping Labels, this is required when requesting labels 2 through n)
       def add_master_tracking_id(xml)
         if @mps.has_key? :master_tracking_id
@@ -226,52 +277,7 @@ module Fedex
                 xml.Units package[:dimensions][:units]
               }
             end
-            add_customer_references(xml, package)
-            if package[:special_services_requested] && package[:special_services_requested][:special_service_types]
-              xml.SpecialServicesRequested{
-                if package[:special_services_requested][:special_service_types].is_a? Array
-                  package[:special_services_requested][:special_service_types].each do |type|
-                    xml.SpecialServiceTypes type
-                  end
-                else
-                  xml.SpecialServiceTypes package[:special_services_requested][:special_service_types]
-                end
-                # Handle COD Options
-                if package[:special_services_requested][:cod_detail]
-                  xml.CodDetail{
-                    xml.CodCollectionAmount{
-                      xml.Currency package[:special_services_requested][:cod_detail][:cod_collection_amount][:currency]
-                      xml.Amount package[:special_services_requested][:cod_detail][:cod_collection_amount][:amount]
-                    }
-                    if package[:special_services_requested][:cod_detail][:add_transportation_charges]
-                      xml.AddTransportationCharges package[:special_services_requested][:cod_detail][:add_transportation_charges]
-                    end
-                    xml.CollectionType package[:special_services_requested][:cod_detail][:collection_type]
-                    xml.CodRecipient {
-                      add_shipper(xml)
-                    }
-                    if package[:special_services_requested][:cod_detail][:reference_indicator]
-                      xml.ReferenceIndicator package[:special_services_requested][:cod_detail][:reference_indicator]
-                    end
-                  }
-                end
-                # DangerousGoodsDetail goes here
-                if package[:special_services_requested][:dry_ice_weight]
-                  xml.DryIceWeight{
-                    xml.Units package[:special_services_requested][:dry_ice_weight][:units]
-                    xml.Value package[:special_services_requested][:dry_ice_weight][:value]
-                  }
-                end
-                if package[:special_services_requested][:signature_option_detail]
-                  xml.SignatureOptionDetail{
-                    xml.OptionType package[:special_services_requested][:signature_option_detail][:signature_option_type]
-                  }
-                end
-                if package[:special_services_requested][:priority_alert_detail]
-                  xml.PriorityAlertDetail package[:special_services_requested][:priority_alert_detail]
-                end
-              }
-            end
+            add_customer_references(xml, package)            
           }
         end
       end
