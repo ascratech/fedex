@@ -101,7 +101,7 @@ module Fedex
         
     def cod_service_type
       options[:cod_service_type]
-    end
+    end 
         
     def time_of_delivery
       options[:time_of_delivery]
