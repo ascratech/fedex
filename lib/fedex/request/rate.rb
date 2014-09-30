@@ -13,7 +13,7 @@ module Fedex
           rate_reply_details = [rate_reply_details] if rate_reply_details.is_a?(Hash)
 
           rate_reply_details.map do |rate_reply|
-            rate_details = [rate_reply[:rated_shipment_details]].flatten.first[:shipment_rate_detail]
+            rate_details = [rate_reply[:rated_shipment_details]].flatten.last[:shipment_rate_detail]
             rate_details.merge!(service_type: rate_reply[:service_type])
             Fedex::Rate.new(rate_details)
           end
